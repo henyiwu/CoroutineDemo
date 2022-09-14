@@ -1,6 +1,5 @@
-package com.gzik.pandora.activity.setting
+package com.example.coroutinedemo
 
-import com.meelive.ingkee.logger.IKLog
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.lang.ArithmeticException
@@ -136,7 +135,7 @@ object CoroutineExceptionTest {
             try {
                 repeat(1000) {
                     delay(200)
-                    IKLog.d("west", "time $it")
+                    println("time $it")
                 }
             } finally {
                 println("child 2 finished.")

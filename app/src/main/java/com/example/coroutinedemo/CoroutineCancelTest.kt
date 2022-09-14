@@ -1,6 +1,5 @@
-package com.gzik.pandora.activity.setting
+package com.example.coroutinedemo
 
-import com.meelive.ingkee.logger.IKLog
 import kotlinx.coroutines.*
 import java.io.BufferedReader
 import java.io.FileReader
