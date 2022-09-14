@@ -21,7 +21,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineLaunchMode.launchModeDefault()
 //        CoroutineLaunchMode.launchModeAtomic()
 //        CoroutineLaunchMode.launchModeLazy()
-        CoroutineLaunchMode.launchModeUnDispatch()
+//        CoroutineLaunchMode.launchModeUnDispatch()
+        CoroutineFlow.testMultipleValues4()
     }
 
     /**
