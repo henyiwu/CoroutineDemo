@@ -2,6 +2,8 @@ package com.example.coroutinedemo
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.system.measureTimeMillis
+import kotlin.time.measureTime
 
 /**
  * Created by wangzhiping on 2022/9/14.
@@ -246,7 +248,7 @@ object CoroutineFlow {
     /**
      * 出于性能考虑，大多数其他流不会自行执行取消检测，所以以下代码，如果没有声明cancellable，即使调用了cancel()，也可能来不及取消
      *
-     * 声明了cancellable后，调用了cancel，便进入了取消中状态，后续不再收集
+     * 声明了cancellable后，调用了cancel，便进入了取消中状态，后续不再收集，抛出异常，程序退出
      */
     fun testCancellableFlow() = runBlocking {
         /*
@@ -271,5 +273,131 @@ object CoroutineFlow {
                 LogUtil.d("$it")
                 cancel()
             }
+    }
+
+    fun simpleFlow8() = flow<Int> {
+        for (i in 1..3) {
+            delay(100)
+            emit(i)
+            LogUtil.d("emitting $i ${Thread.currentThread().name}")
+        }
+    }
+
+    /**
+     * 流的背压
+     * "背压"指的是在数据流生产与消耗的过程中，生产的速度比消耗的速度快
+     * 2022-09-18 23:37:32.271 30513-30513/com.example.coroutinedemo D/west: collected 1 main
+     * 2022-09-18 23:37:32.272 30513-30513/com.example.coroutinedemo D/west: emitting 1 main
+     * 2022-09-18 23:37:32.754 30513-30513/com.example.coroutinedemo D/west: collected 2 main
+     * 2022-09-18 23:37:32.754 30513-30513/com.example.coroutinedemo D/west: emitting 2 main
+     * 2022-09-18 23:37:33.231 30513-30513/com.example.coroutinedemo D/west: collected 3 main
+     * 2022-09-18 23:37:33.231 30513-30513/com.example.coroutinedemo D/west: emitting 3 main
+     * 2022-09-18 23:37:33.231 30513-30513/com.example.coroutinedemo D/west: 1459
+     * 收集流数据耗时1400多毫秒，即至少(100+300)*3
+     */
+    fun testCoroutineBackPress() = runBlocking {
+        val time = measureTimeMillis {
+            simpleFlow8()
+                .collect {
+                    delay(300)
+                    LogUtil.d("collected $it ${Thread.currentThread().name}")
+                }
+        }
+        LogUtil.d(time.toString())
+    }
+
+    /**
+     * 使用缓冲区
+     * 2022-09-18 23:40:08.000 30845-30845/com.example.coroutinedemo D/west: emitting 1 main
+     * 2022-09-18 23:40:08.140 30845-30845/com.example.coroutinedemo D/west: emitting 2 main
+     * 2022-09-18 23:40:08.278 30845-30845/com.example.coroutinedemo D/west: emitting 3 main
+     * 2022-09-18 23:40:08.342 30845-30845/com.example.coroutinedemo D/west: collected 1 main
+     * 2022-09-18 23:40:08.684 30845-30845/com.example.coroutinedemo D/west: collected 2 main
+     * 2022-09-18 23:40:09.022 30845-30845/com.example.coroutinedemo D/west: collected 3 main
+     * 2022-09-18 23:40:09.081 30845-30845/com.example.coroutinedemo D/west: 1255
+     * 耗时减少为1200+
+     * 即flow数据流，是在主线程同时发出的，同时发出数据1..3，耗时100ms，收集数据耗时300ms*3
+     */
+    fun testCoroutineBackPressWithBuffer() = runBlocking {
+        val time = measureTimeMillis {
+            simpleFlow8()
+                .buffer(50)
+                .collect {
+                    delay(300)
+                    LogUtil.d("collected $it ${Thread.currentThread().name}")
+                }
+        }
+        LogUtil.d(time.toString())
+    }
+
+    /**
+     * 上述testCoroutineBackPressWithBuffer()也可以用flowOn进行优化，达到相同的效果
+     * 即流的发射在后台线程进行，执行延时100ms后挂起协程，并发地执行3个协程
+     * 2022-09-18 23:49:20.916 4137-4245/com.example.coroutinedemo D/west: emitting 1 DefaultDispatcher-worker-1
+     * 2022-09-18 23:49:21.045 4137-4245/com.example.coroutinedemo D/west: emitting 2 DefaultDispatcher-worker-1
+     * 2022-09-18 23:49:21.181 4137-4245/com.example.coroutinedemo D/west: emitting 3 DefaultDispatcher-worker-1
+     * 2022-09-18 23:49:21.251 4137-4137/com.example.coroutinedemo D/west: collected 1 main
+     * 2022-09-18 23:49:21.592 4137-4137/com.example.coroutinedemo D/west: collected 2 main
+     * 2022-09-18 23:49:21.933 4137-4137/com.example.coroutinedemo D/west: collected 3 main
+     * 2022-09-18 23:49:22.000 4137-4137/com.example.coroutinedemo D/west: 1292
+     * @see testCoroutineBackPressWithBuffer
+     */
+    fun testCoroutineBackPressWithFlowOn() = runBlocking {
+        val time = measureTimeMillis {
+            simpleFlow8()
+                .flowOn(Dispatchers.IO)
+                .collect {
+                    delay(300)
+                    LogUtil.d("collected $it ${Thread.currentThread().name}")
+                }
+        }
+        LogUtil.d(time.toString())
+    }
+
+    /**
+     * conflate:合并，取最新的数据，但一定会取第一个和最后一个数据
+     * 不处理每一项数据，只取最新的数据，在实例中，跳过了i=2的情况
+     * 2022-09-18 23:55:10.782 6381-6381/com.example.coroutinedemo D/west: emitting 1 main
+     * 2022-09-18 23:55:10.923 6381-6381/com.example.coroutinedemo D/west: emitting 2 main
+     * 2022-09-18 23:55:11.052 6381-6381/com.example.coroutinedemo D/west: emitting 3 main
+     * 2022-09-18 23:55:11.112 6381-6381/com.example.coroutinedemo D/west: collected 1 main
+     * 2022-09-18 23:55:11.450 6381-6381/com.example.coroutinedemo D/west: collected 3 main
+     * 2022-09-18 23:55:11.521 6381-6381/com.example.coroutinedemo D/west: 923
+     */
+    fun testCoroutineBackPressWithConflate() = runBlocking {
+        val time = measureTimeMillis {
+            simpleFlow8()
+                .conflate()
+                .collect {
+                    delay(300)
+                    LogUtil.d("collected $it ${Thread.currentThread().name}")
+                }
+        }
+        LogUtil.d(time.toString())
+    }
+
+    /**
+     * 2022-09-19 00:05:00.180 8260-8260/com.example.coroutinedemo D/west: emitting 1 main
+     * 2022-09-19 00:05:00.316 8260-8260/com.example.coroutinedemo D/west: emitting 2 main
+     * 2022-09-19 00:05:00.456 8260-8260/com.example.coroutinedemo D/west: emitting 3 main
+     * 2022-09-19 00:05:00.602 8260-8260/com.example.coroutinedemo D/west: emitting 4 main
+     * 2022-09-19 00:05:00.744 8260-8260/com.example.coroutinedemo D/west: emitting 5 main
+     * 2022-09-19 00:05:00.890 8260-8260/com.example.coroutinedemo D/west: emitting 6 main
+     * 2022-09-19 00:05:01.032 8260-8260/com.example.coroutinedemo D/west: emitting 7 main
+     * 2022-09-19 00:05:01.178 8260-8260/com.example.coroutinedemo D/west: emitting 8 main
+     * 2022-09-19 00:05:01.321 8260-8260/com.example.coroutinedemo D/west: emitting 9 main
+     * 2022-09-19 00:05:01.460 8260-8260/com.example.coroutinedemo D/west: emitting 10 main
+     * 2022-09-19 00:05:01.799 8260-8260/com.example.coroutinedemo D/west: collected 10 main
+     * 2022-09-19 00:05:01.871 8260-8260/com.example.coroutinedemo D/west: 1834
+     */
+    fun testCoroutineBackPressWithCollectLast() = runBlocking {
+        val time = measureTimeMillis {
+            simpleFlow8()
+                .collectLatest {
+                    delay(300)
+                    LogUtil.d("collected $it ${Thread.currentThread().name}")
+                }
+        }
+        LogUtil.d(time.toString())
     }
 }

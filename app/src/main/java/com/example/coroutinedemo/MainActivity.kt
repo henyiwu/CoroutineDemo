@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineLaunchMode.launchModeLazy()
 //        CoroutineLaunchMode.launchModeUnDispatch()
 //        CoroutineFlow.testMultipleValues4()
-        CoroutineFlow.testCancellableFlow()
+        CoroutineFlow.testCoroutineBackPressWithCollectLast()
     }
 
     /**
