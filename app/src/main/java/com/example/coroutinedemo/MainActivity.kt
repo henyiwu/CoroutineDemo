@@ -26,7 +26,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineFlow.testCoroutineBackPressWithCollectLast()
 //        CoroutineOperator.testMapFlowOperator()
 //        CoroutineOperator.testTransformFlowOperator()
-        CoroutineOperator.testZipOperator()
+//        CoroutineOperator.testZipOperator()
+//        CoroutineOperator.testFlatMapConcat()
+//        CoroutineOperator.testFlatMapMerge()
+//        CoroutineOperator.testFlatMapLatest()
+//        CoroutineFLowExceptionTest.testFlowException()
+        CoroutineFLowExceptionTest.testFlowException3()
     }
 
     /**

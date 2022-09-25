@@ -117,4 +117,76 @@ object CoroutineOperator {
             }
         }
     }
+
+    private fun requestFlow(i: Int) = flow {
+        emit("i:${i}, first")
+        delay(500)
+        emit("i:${i}, second")
+    }
+
+    /**
+     * flow展平
+     * 2022-09-25 20:54:25.723 6853-6853/com.example.coroutinedemo D/west: i:1, first at 149 ms from start
+     * 2022-09-25 20:54:26.258 6853-6853/com.example.coroutinedemo D/west: i:1, second at 685 ms from start
+     * 2022-09-25 20:54:26.402 6853-6853/com.example.coroutinedemo D/west: i:2, first at 829 ms from start
+     * 2022-09-25 20:54:26.943 6853-6853/com.example.coroutinedemo D/west: i:2, second at 1370 ms from start
+     * 2022-09-25 20:54:27.084 6853-6853/com.example.coroutinedemo D/west: i:3, first at 1511 ms from start
+     * 2022-09-25 20:54:27.585 6853-6853/com.example.coroutinedemo D/west: i:3, second at 2012 ms from start
+     */
+    fun testFlatMapConcat() = runBlocking {
+        val startTime = System.currentTimeMillis()
+        (1..3).asFlow()
+            .onEach {
+                delay(100)
+            }
+            .flatMapConcat {
+                requestFlow(it)
+            }
+            .collect {
+                LogUtil.d("$it at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
+
+    /**
+     * flow合并
+     * 2022-09-25 21:01:49.997 10631-10631/com.example.coroutinedemo D/west: i:1, first at 588 ms from start
+     * 2022-09-25 21:01:50.537 10631-10631/com.example.coroutinedemo D/west: i:1, second at 1129 ms from start
+     * 2022-09-25 21:01:50.538 10631-10631/com.example.coroutinedemo D/west: i:2, first at 1130 ms from start
+     * 2022-09-25 21:01:51.084 10631-10631/com.example.coroutinedemo D/west: i:2, second at 1675 ms from start
+     * 2022-09-25 21:01:51.084 10631-10631/com.example.coroutinedemo D/west: i:3, first at 1676 ms from start
+     * 2022-09-25 21:01:51.595 10631-10631/com.example.coroutinedemo D/west: i:3, second at 2186 ms from start
+     */
+    fun testFlatMapMerge() = runBlocking {
+        val startTime = System.currentTimeMillis()
+        (1..3).asFlow()
+            .onEach {
+                delay(500)
+            }
+            .flatMapMerge {
+                requestFlow(it)
+            }
+            .collect {
+                LogUtil.d("$it at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
+
+    /**
+     * 2022-09-25 21:06:17.863 12867-12867/com.example.coroutinedemo D/west: i:1, first at 197 ms from start
+     * 2022-09-25 21:06:18.010 12867-12867/com.example.coroutinedemo D/west: i:2, first at 344 ms from start
+     * 2022-09-25 21:06:18.133 12867-12867/com.example.coroutinedemo D/west: i:3, first at 466 ms from start
+     * 2022-09-25 21:06:18.674 12867-12867/com.example.coroutinedemo D/west: i:3, second at 1008 ms from start
+     */
+    fun testFlatMapLatest() = runBlocking {
+        val startTime = System.currentTimeMillis()
+        (1..3).asFlow()
+            .onEach {
+                delay(100)
+            }
+            .flatMapLatest {
+                requestFlow(it)
+            }
+            .collect {
+                LogUtil.d("$it at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
 }

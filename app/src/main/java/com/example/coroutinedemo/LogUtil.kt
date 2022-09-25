@@ -7,5 +7,4 @@ object LogUtil {
     fun d(msg: String) {
         Log.d("west", msg)
     }
-
 }
