@@ -25,7 +25,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineFlow.testMultipleValues4()
 //        CoroutineFlow.testCoroutineBackPressWithCollectLast()
 //        CoroutineOperator.testMapFlowOperator()
-        CoroutineOperator.testTransformFlowOperator()
+//        CoroutineOperator.testTransformFlowOperator()
+        CoroutineOperator.testZipOperator()
     }
 
     /**
