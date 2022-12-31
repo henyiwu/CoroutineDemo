@@ -74,6 +74,7 @@ object CoroutineExceptionTest {
         val deferred = GlobalScope.async {
             throw ArithmeticException()
         }
+
         try {
             deferred.await()
         } catch (e: Exception) {

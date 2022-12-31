@@ -64,8 +64,9 @@ object CoroutineLaunchMode {
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun launchModeUnDispatch() = runBlocking {
-        launch(context = Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
+        launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
             // thread is Thread[main,5,main]}
+            // 虽然指定的是IO，但因为UNDISPATCHED的缘故，在遇到第一个挂起点之前，都在当前调用线程中执行
             LogUtil.d("thread is ${Thread.currentThread()}}")
             launch {
                 LogUtil.d("inner coroutine,thread is ${Thread.currentThread()}")

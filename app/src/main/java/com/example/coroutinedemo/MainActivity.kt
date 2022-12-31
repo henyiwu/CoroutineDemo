@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineLaunchMode.launchModeDefault()
 //        CoroutineLaunchMode.launchModeAtomic()
 //        CoroutineLaunchMode.launchModeLazy()
-//        CoroutineLaunchMode.launchModeUnDispatch()
+        CoroutineLaunchMode.launchModeUnDispatch()
 //        CoroutineFlow.testMultipleValues4()
 //        CoroutineFlow.testCoroutineBackPressWithCollectLast()
 //        CoroutineOperator.testMapFlowOperator()
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 //        CoroutineOperator.testFlatMapMerge()
 //        CoroutineOperator.testFlatMapLatest()
 //        CoroutineFLowExceptionTest.testFlowException()
-        CoroutineFLowExceptionTest.testFlowException3()
+//        CoroutineFLowExceptionTest.testFlowException3()
     }
 
     /**
